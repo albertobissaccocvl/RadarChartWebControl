@@ -1,0 +1,178 @@
+<div class="chart-view">
+
+	<canvas id="myChart" width="100%" height="100%"></canvas>
+
+</div>
+
+<script src="chart.js"></script>
+
+<script src='webcc.min.js'></script>
+
+<script>
+
+// <block:setup:1>
+let data = {
+  labels: [],
+  datasets: [{
+    label: 'Dataset 1',
+    data: [],
+    fill: true,
+    backgroundColor: 'rgba(135, 190, 50, 0.2)',
+    borderColor: 'rgb(135, 190, 50)',
+    pointBackgroundColor: 'rgb(135, 190, 50)',
+    pointBorderColor: '#fff',
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: 'rgb(135, 190, 50)'
+  }, {
+    label: 'Dataset 2',
+    data: [],
+    fill: true,
+    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+    borderColor: 'rgb(54, 162, 235)',
+    pointBackgroundColor: 'rgb(54, 162, 235)',
+    pointBorderColor: '#fff',
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: 'rgb(54, 162, 235)'
+  }]
+};
+// </block:setup>
+
+const ctx = document.getElementById('myChart');
+
+  let chart = new Chart(ctx, {
+    type: 'radar',
+	  data: data,
+    options: {
+    scales: {
+      y: {
+        title: {
+          display: true,
+          text: 'Value'
+        },
+        min: 0,
+        max: 100,
+        ticks: {
+          // forces step size to be 50 units
+          stepSize: 5
+        }
+      }
+    },
+	  responsive: false, //responsive: true non funziona bene e fa rimpicciolire la finestra fino a farla scomparire prima che si riadatti alle nuove dimensioni.
+	  maintainAspectRatio: true
+    }
+  });
+
+    // Updates the value shown by the chart whenever it is changed, e.g. by a WinCC Unified tag or script.
+		// This function will be called by "setProperty" whenever the contract property ChartValue is changed.
+		// - value: number that contains the new value to be shown in the chart.
+		function updateValue(value, nDataset) {
+      //console.log('updateValue iniziale');
+      for (let i = 0; i < chart.data.labels.length; i++) {
+        //console.log('updateValue' + i);
+        chart.data.datasets[nDataset].data[i] = value;
+      }
+      //console.log('ora faccio update');
+      chart.update();
+      //console.log('fine update');
+		}
+
+    function updateLabels(labels) {
+      console.log("inizio updateLabels")
+      chart.data.labels.length = 0; // rimuovi tutti gli elementi dall'array
+      labels.forEach(function(label) {
+          //if (!chart.data.labels.includes(label.Value)) {
+              chart.data.labels.push(label.Value);
+          /*    console.log("Aggiunta label")
+          } else{
+            console.log ("label già presente");
+          }*/
+      });
+      chart.update();
+  }
+  
+  	// This is a callback function that is called every time a contract property changes. The function forwards the change to 
+		// other functions so you can see the new value in the control.
+		// - data: object containing a key and a value property. The "key" contains the name of the changed contract property and 
+		// the "value" contains the new value.
+		function setProperty(data) {
+			console.log('onPropertyChanged ' + data.key);  // uncomment this line to check whether data is incoming in the browser console from WinCC Unified
+			switch (data.key) {
+				case 'ChartValue':
+          //console.log('setProperty ChartValue');
+					updateValue(data.value, data.dataset + 1);
+					break;
+        case 'Labels':
+          console.log('setProperty Labels');
+					updateLabels(data.value);
+					break;
+			}
+		}
+
+    /*function throttle(fn, limit) {
+      let flag = true;
+      return function() {
+        let context = this, args = arguments;
+        if (flag) {
+          fn.apply(context, args);
+          flag = false;
+          setTimeout(() => {
+            flag = true;
+          }, limit);
+        }
+      };
+    }
+    
+    const throttledResize = throttle(chart.resize, 5000);
+    window.addEventListener('resize', throttledResize);*/
+    
+  
+  window.addEventListener('resize', function() {
+    chart.resize();
+  });
+
+  var defaultProperties = {
+    ChartValue: 20,
+    Datasets: [],
+    Labels: []
+  }
+  
+	// Initialize the custom control
+	WebCC.start(
+	function ( result ) {
+			if ( result ) {
+				console.log("connected successfully")
+        console.log("WEBCC: " + JSON.stringify(WebCC));
+        console.log("WEBCC Properties: " + JSON.stringify(WebCC.Properties));
+        setProperty({ key: 'ChartValue', value: WebCC.Properties.ChartValue, dataset: 0 });
+        setProperty({ key: 'Labels', value: WebCC.Properties.Labels });
+        // Subscribe for value changes
+				WebCC.onPropertyChanged.subscribe(setProperty);
+			}
+			else
+			{
+				console.log("connection failed")
+			}
+
+		},
+		
+		// contract
+		{
+			methods: {
+			},
+			//Events
+			events: {
+			},
+			//Properties
+			//////////
+			/*properties: {
+        ChartValue: 20
+			}*/
+      properties: defaultProperties
+		},
+		// extensions
+		[],
+		// timeout
+		10000
+   );     
+	   
+</script>

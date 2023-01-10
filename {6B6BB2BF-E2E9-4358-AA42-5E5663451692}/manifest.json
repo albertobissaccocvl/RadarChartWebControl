@@ -1,0 +1,79 @@
+{
+	"mver": "1.2.0",
+	"control": {
+		"identity": {
+			"name": "Radar chart",
+			"version": "1.0",
+			"displayname": "Radar chart",
+			"icon": "./assets/logo.png",
+			"type": "guid://6B6BB2BF-E2E9-4358-AA42-5E5663451692",
+			"start": "./control/index.html"
+		},
+		"environment": {
+			"prerequisites": {
+				"renderingspace": {
+					"defaultwidth": 250,
+					"defaultheight": 250,
+					"maxwidth": 250,
+					"maxheight": 250,
+					"unit": "px"
+				}
+			}
+		},
+		"metadata": {
+			"author": "Alberto",
+			"description": "Mostra un grafico a radar.",
+			"keywords": []
+		},
+		"contracts": {
+			"api": {
+				"methods": {},
+				"events": {},
+				"properties": {
+					"ChartValue": {
+						"type": "number",
+						"default": 20
+					},
+					"Datasets": {
+						"$ref": "#/control/types/Datasets"
+					},
+					"Labels": {
+						"$ref": "#/control/types/Labels"
+					}
+				}
+			}
+		},
+		"types": {
+			"Datasets": {
+				"type": "array",
+				"items": {
+					"$ref": "#/control/types/Dataset"
+				}
+			},
+			"Dataset": {
+				"type": "object",
+				"properties": {
+					"Value": {
+						"type": "number",
+						"default": 0
+					}
+				}
+			},
+			"Labels": {
+				"type": "array",
+				"items": {
+					"$ref": "#/control/types/Label"
+				}
+			},
+			"Label": {
+				"type": "object",
+				"properties": {
+					"Value": {
+						"type": "string",
+						"default": "label"
+					}
+				}
+			}
+		}
+	}
+}
