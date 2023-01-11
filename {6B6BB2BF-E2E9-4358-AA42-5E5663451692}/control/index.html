@@ -15,7 +15,7 @@ let data = {
   labels: [],
   datasets: [{
     label: 'Dataset 1',
-    data: [],
+    data: [0, 0],
     fill: true,
     backgroundColor: 'rgba(135, 190, 50, 0.2)',
     borderColor: 'rgb(135, 190, 50)',
@@ -24,15 +24,10 @@ let data = {
     pointHoverBackgroundColor: '#fff',
     pointHoverBorderColor: 'rgb(135, 190, 50)'
   }, {
-    label: 'Dataset 2',
-    data: [],
-    fill: true,
-    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-    borderColor: 'rgb(54, 162, 235)',
-    pointBackgroundColor: 'rgb(54, 162, 235)',
-    pointBorderColor: '#fff',
-    pointHoverBackgroundColor: '#fff',
-    pointHoverBorderColor: 'rgb(54, 162, 235)'
+    label: 'Riferimenti fissi',
+    data: [0, 10, 20, 30, 40, 50, 70, 80, 90, 100],
+    fill: false,
+    borderColor: 'rgba(0,0,0, 0.01)',
   }]
 };
 // </block:setup>
@@ -65,11 +60,28 @@ const ctx = document.getElementById('myChart');
     // Updates the value shown by the chart whenever it is changed, e.g. by a WinCC Unified tag or script.
 		// This function will be called by "setProperty" whenever the contract property ChartValue is changed.
 		// - value: number that contains the new value to be shown in the chart.
-		function updateValue(value, nDataset) {
+		function updateValue(value) {
       //console.log('updateValue iniziale');
-      for (let i = 0; i < chart.data.labels.length; i++) {
+      chart.data.datasets[0].data = [0,0,0,0];
+      for (let i = 0; i < 4; i++) {
         //console.log('updateValue' + i);
-        chart.data.datasets[nDataset].data[i] = value;
+        chart.data.datasets[0].data[i] = value;
+      }
+      //console.log('ora faccio update');
+      chart.update();
+      //console.log('fine update');
+		}
+
+    function updateValues(values) {
+      //console.log('updateValues iniziale');
+      //console.log('VALUES = ' + JSON.stringify(values));
+      //console.log("CHART DATASETS 1: " + JSON.stringify(chart.data));
+      chart.data.datasets[0].data = [];
+      //console.log("CHART DATASETS 2: " + JSON.stringify(chart.data));
+      for (let i = 0; i < values.length; i++) {
+        chart.data.datasets[0].data.push(values[i].Value);
+        //console.log("HO INSERITO: " + chart.data.datasets[0].data[i], " CHE DOVREBBE ESSERE UGUALE A: " + values[i].Value);
+        //console.log('i = ' + i + " values.length = " + values.length);
       }
       //console.log('ora faccio update');
       chart.update();
@@ -77,7 +89,7 @@ const ctx = document.getElementById('myChart');
 		}
 
     function updateLabels(labels) {
-      console.log("inizio updateLabels")
+      //console.log("inizio updateLabels")
       chart.data.labels.length = 0; // rimuovi tutti gli elementi dall'array
       labels.forEach(function(label) {
           //if (!chart.data.labels.includes(label.Value)) {
@@ -88,7 +100,14 @@ const ctx = document.getElementById('myChart');
           }*/
       });
       chart.update();
-  }
+    }
+
+    function updateDatasetName(name) {
+      //console.log("inizio updateDatasetName. Ho ricevuto: " + name)
+      chart.data.datasets[0].label = name;
+      //console.log("chart.data.datasets.label: " + chart.data.datasets[0].label)
+      chart.update();
+    }
   
   	// This is a callback function that is called every time a contract property changes. The function forwards the change to 
 		// other functions so you can see the new value in the control.
@@ -99,11 +118,19 @@ const ctx = document.getElementById('myChart');
 			switch (data.key) {
 				case 'ChartValue':
           //console.log('setProperty ChartValue');
-					updateValue(data.value, data.dataset + 1);
+					updateValue(data.value);
 					break;
         case 'Labels':
-          console.log('setProperty Labels');
+          //console.log('setProperty Labels');
 					updateLabels(data.value);
+					break;
+        case 'Datasets':
+          console.log('setProperty Datasets');
+					updateValues(data.value);
+					break;
+        case 'DatasetName':
+          //console.log('setProperty DatasetName');
+					updateDatasetName(data.value);
 					break;
 			}
 		}
@@ -132,8 +159,19 @@ const ctx = document.getElementById('myChart');
 
   var defaultProperties = {
     ChartValue: 20,
-    Datasets: [],
-    Labels: []
+    Datasets: [{
+      label: 'Dataset 1',
+      data: [0, 0],
+      fill: true,
+      backgroundColor: 'rgba(135, 190, 50, 0.2)',
+      borderColor: 'rgb(135, 190, 50)',
+      pointBackgroundColor: 'rgb(135, 190, 50)',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: 'rgb(135, 190, 50)'
+    }],
+    Labels: [],
+    DatasetName: "Name"
   }
   
 	// Initialize the custom control
@@ -141,10 +179,15 @@ const ctx = document.getElementById('myChart');
 	function ( result ) {
 			if ( result ) {
 				console.log("connected successfully")
-        console.log("WEBCC: " + JSON.stringify(WebCC));
-        console.log("WEBCC Properties: " + JSON.stringify(WebCC.Properties));
-        setProperty({ key: 'ChartValue', value: WebCC.Properties.ChartValue, dataset: 0 });
+        //console.log("WEBCC: " + JSON.stringify(WebCC));
+        
+        //console.log("WEBCC Properties: " + JSON.stringify(WebCC.Properties));
+        console.log("WEBCC Datasets: " + JSON.stringify(WebCC.Properties.Datasets));
+
+        //setProperty({ key: 'ChartValue', value: WebCC.Properties.ChartValue});
         setProperty({ key: 'Labels', value: WebCC.Properties.Labels });
+        setProperty({ key: 'DatasetName', value: WebCC.Properties.DatasetName });
+        setProperty({ key: 'Datasets', value: WebCC.Properties.Datasets });
         // Subscribe for value changes
 				WebCC.onPropertyChanged.subscribe(setProperty);
 			}

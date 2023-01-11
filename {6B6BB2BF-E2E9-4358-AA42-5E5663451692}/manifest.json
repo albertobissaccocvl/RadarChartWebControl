@@ -37,6 +37,10 @@
 					"Datasets": {
 						"$ref": "#/control/types/Datasets"
 					},
+					"DatasetName": {
+						"type": "string",
+						"default": "Set di dati"
+					},
 					"Labels": {
 						"$ref": "#/control/types/Labels"
 					}
@@ -47,10 +51,10 @@
 			"Datasets": {
 				"type": "array",
 				"items": {
-					"$ref": "#/control/types/Dataset"
+					"$ref": "#/control/types/DatasetValue"
 				}
 			},
-			"Dataset": {
+			"DatasetValue": {
 				"type": "object",
 				"properties": {
 					"Value": {
